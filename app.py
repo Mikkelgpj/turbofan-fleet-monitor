@@ -73,7 +73,7 @@ def train_quantile_models(_train, _test):
     X_test = X_test_df.loc[last_idx].values
 
     common = dict(objective='quantile', n_estimators=300, learning_rate=0.05,
-                  num_leaves=31, min_data_in_leaf=20, random_state=42, verbose=-1)
+                  num_leaves=31, min_child_samples=20, random_state=42, verbose=-1)
     preds = {}
     for q in [0.1, 0.5, 0.9]:
         m = lgb.LGBMRegressor(alpha=q, **common)
