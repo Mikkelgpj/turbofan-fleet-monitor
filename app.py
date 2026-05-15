@@ -64,13 +64,12 @@ def train_quantile_models(_train, _test):
     train_sorted = train_z.sort_values(['unit_id', 'cycle'])
     test_sorted  = test_z.sort_values(['unit_id', 'cycle'])
     X_train_df = build_features(train_sorted)
-    feature_cols = X_train_df.columns
-    X_train = X_train_df.values
-    y_train = train_sorted['RUL'].values
+    y_train    = train_sorted['RUL'].values
 
-    last_idx = test_sorted.groupby('unit_id')['cycle'].idxmax()
-    X_test_df = build_features(test_sorted).reindex(columns=feature_cols, fill_value=0)
-    X_test = X_test_df.loc[last_idx].values
+    last_idx  = test_sorted.groupby('unit_id')['cycle'].idxmax()
+    X_test_df = (build_features(test_sorted)
+                 .reindex(columns=X_train_df.columns, fill_value=0)
+                 .loc[last_idx])
 
     preds = {}
     for q in [0.1, 0.5, 0.9]:
@@ -82,9 +81,11 @@ def train_quantile_models(_train, _test):
             num_leaves=31,
             min_child_samples=20,
             random_state=42,
+            verbosity=-1,
+            force_col_wise=True,
         )
-        m.fit(X_train, y_train)
-        preds[q] = m.predict(X_test)
+        m.fit(X_train_df, y_train)
+        preds[q] = m.predict(X_test_df)
 
     return test_z, preds
 
