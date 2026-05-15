@@ -3,7 +3,30 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import lightgbm as lgb
+import os
+import contextlib
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings('ignore')
+
+
+@contextlib.contextmanager
+def suppress_stdout_stderr():
+    """Mute Python prints and C-level writes to stdout/stderr (LightGBM training noise)."""
+    devnull = os.open(os.devnull, os.O_RDWR)
+    saved_out = os.dup(1)
+    saved_err = os.dup(2)
+    try:
+        os.dup2(devnull, 1)
+        os.dup2(devnull, 2)
+        yield
+    finally:
+        os.dup2(saved_out, 1)
+        os.dup2(saved_err, 2)
+        os.close(devnull)
+        os.close(saved_out)
+        os.close(saved_err)
 
 st.set_page_config(page_title='Turbofan Fleet Monitor', layout='wide')
 st.title('Turbofan Fleet Health Monitor')
@@ -84,8 +107,9 @@ def train_quantile_models(_train, _test):
             verbosity=-1,
             force_col_wise=True,
         )
-        m.fit(X_train_df, y_train)
-        preds[q] = m.predict(X_test_df)
+        with suppress_stdout_stderr():
+            m.fit(X_train_df, y_train)
+            preds[q] = m.predict(X_test_df)
 
     return test_z, preds
 
