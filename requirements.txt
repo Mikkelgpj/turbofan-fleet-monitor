@@ -1,0 +1,10 @@
+streamlit
+numpy
+pandas
+matplotlib
+scikit-learn
+lightgbm
+filterpy
+lifelines
+properscoring
+plotly
